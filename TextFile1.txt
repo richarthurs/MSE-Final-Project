@@ -1,0 +1,178 @@
+using System;
+using MonoBrick.EV3;
+using System.Threading;
+using System.Text.RegularExpressions;
+
+// START PROCEDURE:
+// FACE OUTSIDE, BUTTON PRESS - DRIVE TO LINE, STOP, TURN AROUND, 
+public static class Program
+{
+    static int ultrasonic(Brick<Sensor, Sensor, Sensor, Sensor> ev3)    // [1] returns the distance in cm to the object
+    {
+        string ultraRaw = ev3.Sensor1.ReadAsString();
+        var digits = Regex.Replace(ultraRaw, @"\D", "");
+        int ultra = Convert.ToInt32(digits);
+        ultra = ultra / 10;
+        return ultra;
+       // Console.WriteLine("ultrasonic:" + ultra);
+    }
+    static bool line(Brick<Sensor, Sensor, Sensor, Sensor> ev3) // [3] returns true if the line sensor value is over a thershold
+    {
+        int linethresh = 500;
+
+        string colorRaw = ev3.Sensor3.ReadAsString();
+        var colordigits = Regex.Replace(colorRaw, @"\D", "");
+        int line = Convert.ToInt32(colordigits);
+        Console.WriteLine("LINE:   " + line);
+
+        if (line > linethresh)
+        {
+            return true;
+        }
+        
+        return false;
+    }
+    static bool touch(Brick<Sensor, Sensor, Sensor, Sensor> ev3)    // [4] returns true if the sensor is pressed
+    {
+        string touch = ev3.Sensor4.ReadAsString();
+        if (touch == "On")
+        {
+            return true;
+        }
+        return false;
+    }
+
+    static void start(Brick<Sensor, Sensor, Sensor, Sensor> ev3)
+    {
+     
+
+            while (line(ev3) != true)   // while the robot is over black, drive forward to the line
+            {
+                ev3.MotorA.On(-50);
+                ev3.MotorB.On(-50);
+            }
+
+            if (line(ev3) == true)
+            {
+                // back up, turn, go to seeking (demo times)
+                ev3.MotorA.On(50);
+                ev3.MotorB.On(50);
+                System.Threading.Thread.Sleep(500);
+                ev3.MotorA.On(50);
+                ev3.MotorB.On(-50);
+                System.Threading.Thread.Sleep(500);
+                ev3.MotorA.Off();
+                ev3.MotorB.Off();
+            }
+
+    }
+    static void backupline(Brick<Sensor, Sensor, Sensor, Sensor> ev3)       // this is what gets done when the rovbot goes over a line
+    {
+        ev3.MotorA.On(50);
+        ev3.MotorB.On(50);
+        System.Threading.Thread.Sleep(500);
+        ev3.MotorA.On(50);
+        ev3.MotorB.On(-50);
+        System.Threading.Thread.Sleep(500);
+        ev3.MotorA.Off();
+        ev3.MotorB.Off();
+    }
+
+    static void seek(Brick<Sensor, Sensor, Sensor, Sensor> ev3)     // turn slightly 
+    {
+        ev3.MotorA.On(-50); // turn slightly
+        ev3.MotorB.On(-40);
+        if (line(ev3) == true)
+        {
+            backupline(ev3);
+        }
+        if (ultrasonic(ev3) < 30)       // if something is within range, go for it. 
+        {
+            attack(ev3);
+        }
+    }
+    static void attack(Brick<Sensor, Sensor, Sensor, Sensor> ev3)
+    {
+     
+        while (ultrasonic(ev3) < 30)
+        {
+            ev3.MotorA.On(-50);
+            ev3.MotorB.On(-50);
+        }
+      
+    }
+   
+    static void Main(string[] args)
+    {
+        var ev3 = new Brick<Sensor, Sensor, Sensor, Sensor>("COM85");
+        ev3.Connection.Close();
+
+        ev3.Connection.Open();
+        ev3.Sensor1 = new UltrasonicSensor(UltrasonicMode.Centimeter);
+        ev3.Sensor3 = new ColorSensor(ColorMode.Raw);
+        ev3.Sensor4 = new TouchSensor();
+
+       
+        ConsoleKeyInfo cki;
+        Console.WriteLine("Press Q to quit");
+        do
+        {
+            cki = Console.ReadKey(true); //press a key    
+            switch (cki.Key)
+            {
+                case ConsoleKey.D1://1 is pressed 
+                    if (touch(ev3) == true)
+                    {
+                        start(ev3);
+                    }
+                    seek(ev3);  // looks for opponent and for a line
+
+                    //if (touch(ev3) == true)
+                    //{
+                    //    Console.WriteLine("pressed");
+                    //}
+                    //else Console.WriteLine("off");
+
+
+                    //int ultra = Program.ultrasonic(ev3);
+                    //Console.WriteLine(ultra);
+
+                    //int line = Program.line(ev3);
+                    //Console.WriteLine(line);
+
+                    //if (ultra < 10)
+                    //{
+                    //    ev3.MotorA.On(-10);
+                    //    ev3.MotorB.On(-10);
+                    //}
+                    //if (ultra > 10) // seek
+                    //{
+                    //    ev3.MotorA.On(-10);
+                    //    ev3.MotorB.On(10);
+                    //}
+
+                    //if (line < 20)
+                    //{
+                    //    ev3.MotorA.On(10);
+                    //    ev3.MotorB.On(10);
+                    //    System.Threading.Thread.Sleep(500);
+                    //    ev3.MotorA.Off();
+                    //    ev3.MotorB.Off();
+                    //}
+                 
+
+                    break;
+
+                case ConsoleKey.S:
+                    Console.WriteLine("stop!");
+                     ev3.MotorA.Brake();
+                     ev3.MotorB.Brake();
+                     ev3.MotorA.Off();
+                     ev3.MotorB.Off();
+                    break;
+                
+            }
+        } while (cki.Key != ConsoleKey.Q);
+        ev3.Connection.Close();
+
+    }
