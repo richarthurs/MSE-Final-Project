@@ -72,7 +72,6 @@ public static class Program
     static int[] GetOnFirstIntersection(){
         float ultrasonic_val = ReadUltrasonic();
         int cell_x_pos = (int)(Math.Round(ultrasonic_val / ULTRASONIC_DISTANCE_PER_BLOCK));
- 
         Console.WriteLine(ultrasonic_val);
         Console.WriteLine(cell_x_pos);
         if (cell_x_pos == 0){
