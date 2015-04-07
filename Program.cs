@@ -83,6 +83,7 @@ public static class Program
         GetOnTrack();
  
         ultrasonic_val = ReadUltrasonic();
+        int cell_y_pos = (int)(Math.Round(ultrasonic_val / ULTRASONIC_DISTANCE_PER_BLOCK));
  
         Console.WriteLine(ultrasonic_val);
         Console.WriteLine(cell_y_pos);
@@ -170,25 +171,6 @@ public static class Program
             Debug.WriteLine(sensor_val);
             Thread.Sleep(10);
             sensor_val = ((ColorSensor)ev3.Sensor3).Read();
-        }
-    }
-    static void findBlock(int x_start, int y_start){
-        bool found = false;
-        int xmoves = 0;
-        if direction == NORTH TurnCW();
-        
-        for(int x = 6-x_start; x < 6; x++){
-       
-            dist_from_wall = (int)(Math.Round(ultrasonic_val / ULTRASONIC_DISTANCE_PER_BLOCK));
-            if(distance < dist_from wall){
-                rotate
-                for int(y = 4-x_start; y < 4; y++){
-                    
-                }
-            }
-             MoveForwardOneBlock();
-             xmoves ++;
-
         }
     }
  
